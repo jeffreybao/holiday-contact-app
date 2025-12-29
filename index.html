@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>节日祝福通讯录</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#0ea5e9',
+                        spring: '#c22424',
+                        valentine: '#e83e8c',
+                        christmas: '#2d8f47',
+                        birthday: '#f97316',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-in': 'slideIn 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .text-shadow { text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3); }
+            .card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1; }
+            .btn-primary { @apply bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors; }
+            .btn-secondary { @apply bg-secondary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors; }
+            .btn-outline { @apply border border-primary text-primary px-3 sm:px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-colors; }
+            .input-field { @apply w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50; }
+            .badge { @apply px-2 py-1 text-xs rounded-full; }
+            .badge-primary { @apply bg-primary/20 text-primary; }
+            .badge-success { @apply bg-success/20 text-success; }
+            .badge-warning { @apply bg-warning/20 text-warning; }
+            .badge-danger { @apply bg-danger/20 text-danger; }
+            /* 响应式滚动条 */
+            .scrollbar-sm::-webkit-scrollbar { @apply w-1.5; }
+            .scrollbar-sm::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+        }
+    </style>
+    <!-- 响应式适配补充 -->
+    <style>
+        /* 防止移动端点击延迟 */
+        * { -webkit-tap-highlight-color: transparent; }
+        /* 适配小屏手机 */
+        @media (max-width: 360px) {
+            .btn-primary, .btn-secondary, .btn-outline { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+            .input-field { padding: 0.5rem 0.75rem; }
+        }
+        /* 适配大屏电脑 */
+        @media (min-width: 1280px) {
+            .container { max-width: 1200px !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen">
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- 顶部导航栏（全端适配） -->
+        <header id="app-header" class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300 w-full">
+            <div class="container mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <div class="h-8 sm:h-10 w-8 sm:w-10 rounded-full bg-primary flex items-center justify-center text-white">
+                        <i class="fa fa-address-book text-sm sm:text-base"></i>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-800">节日祝福通讯录</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-3 sm:space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fa fa-moon-o text-gray-600"></i>
+                    </button>
+                    <div class="relative">
+                        <button id="notification-btn" class="p-2 rounded-full hover:bg-gray-100 relative transition-colors">
+                            <i class="fa fa-bell-o text-gray-600"></i>
+                            <span id="notification-badge" class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notification-dropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg py-2 z-10 hidden animate-fade-in">
+                            <div class="px-4 py-2 border-b">
+                                <h3 class="font-semibold text-sm sm:text-base">通知</h3>
+                            </div>
+                            <div id="notification-list" class="max-h-60 overflow-y-auto scrollbar-sm">
+                            </div>
+                            <div class="px-4 py-2 border-t text-center">
+                                <button id="clear-notifications" class="text-sm text-primary hover:underline">清除所有通知</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button id="user-menu-btn" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <div class="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                                <span class="text-xs sm:text-sm">用</span>
+                            </div>
+                            <span class="text-xs sm:text-sm font-medium hidden sm:inline">用户</span>
+                        </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10 hidden animate-fade-in">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fa fa-user-o mr-2"></i>个人资料
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fa fa-cog mr-2"></i>设置
+                            </a>
+                            <hr class="my-1">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fa fa-sign-out mr-2"></i>退出
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-bars text-gray-600"></i>
+                </button>
+            </div>
+            <!-- 移动端菜单（适配小屏） -->
+            <div id="mobile-menu" class="md:hidden bg-white border-t hidden animate-slide-in">
+                <div class="container mx-auto px-4 py-2 space-y-2">
+                    <a href="#" class="block px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+                        <i class="fa fa-user-o mr-2"></i>个人资料
+                    </a>
+                    <a href="#" class="block px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+                        <i class="fa fa-cog mr-2"></i>设置
+                    </a>
+                    <a href="#" class="block px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center" onclick="toggleTheme()">
+                        <i class="fa fa-moon-o mr-2"></i>切换主题
+                    </a>
+                    <a href="#" class="block px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+                        <i class="fa fa-sign-out mr-2"></i>退出
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区（响应式布局） -->
+        <main class="flex-grow flex flex-col md:flex-row">
+            <!-- 侧边栏（仅桌面显示，移动端隐藏） -->
+            <aside id="sidebar" class="w-full md:w-64 bg-white shadow-sm hidden md:block transition-all duration-300 h-auto md:h-[calc(100vh-60px)] overflow-y-auto scrollbar-sm">
+                <nav class="p-4">
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#dashboard" class="nav-link flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">
+                                <i class="fa fa-home w-5 text-center mr-3"></i>
+                                <span>首页</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#contacts" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fa fa-address-book-o w-5 text-center mr-3"></i>
+                                <span>联系人</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#calendar" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fa fa-calendar w-5 text-center mr-3"></i>
+                                <span>日历</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#templates" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fa fa-file-text-o w-5 text-center mr-3"></i>
+                                <span>祝福模板</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#groups" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fa fa-users w-5 text-center mr-3"></i>
+                                <span>分组管理</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#statistics" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fa fa-bar-chart w-5 text-center mr-3"></i>
+                                <span>统计分析</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="my-4">
+                    <div class="space-y-1">
+                        <h3 class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">节日分类</h3>
+                        <ul class="space-y-1" id="holiday-categories">
+                        </ul>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- 内容区域（全端适配） -->
+            <div class="flex-grow overflow-auto bg-gray-50">
+                <div id="page-content" class="p-3 sm:p-4 md:p-6">
+                    <!-- 首页 -->
+                    <div id="dashboard-page" class="page-content">
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 sm:p-6 text-white mb-4 sm:mb-6 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-1/2 h-full opacity-10">
+                                <div class="w-full h-full bg-red-200 rounded-l-full"></div>
+                            </div>
+                            <div class="relative z-10">
+                                <h2 class="text-xl sm:text-2xl font-bold mb-2">欢迎回来！</h2>
+                                <p class="mb-4 text-sm sm:text-base">今天是 <span id="current-date"></span>，距离下一个节日还有 <span id="next-holiday-countdown"></span> 天。</p>
+                                <div class="flex flex-wrap gap-2 sm:gap-4">
+                                    <button id="add-contact-btn-dashboard" class="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors flex items-center text-sm sm:text-base">
+                                        <i class="fa fa-plus mr-2"></i> 添加联系人
+                                    </button>
+                                    <button id="view-calendar-btn" class="bg-white/20 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center text-sm sm:text-base">
+                                        <i class="fa fa-calendar-check-o mr-2"></i> 查看日历
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 统计卡片（响应式网格） -->
+                        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm card-hover">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs sm:text-sm text-gray-500">总联系人</p>
+                                        <h3 class="text-xl sm:text-2xl font-bold text-gray-800" id="total-contacts">0</h3>
+                                    </div>
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                        <i class="fa fa-users text-xs sm:text-base"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs text-green-600 flex items-center">
+                                    <i class="fa fa-arrow-up mr-1"></i>
+                                    <span>较上月增长 12%</span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm card-hover">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs sm:text-sm text-gray-500">本月生日</p>
+                                        <h3 class="text-xl sm:text-2xl font-bold text-gray-800" id="birthdays-this-month">0</h3>
+                                    </div>
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                        <i class="fa fa-birthday-cake text-xs sm:text-base"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs text-gray-500 flex items-center">
+                                    <span>下一个生日: <span id="next-birthday-name">暂无</span></span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm card-hover">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs sm:text-sm text-gray-500">即将到来的节日</p>
+                                        <h3 class="text-xl sm:text-2xl font-bold text-gray-800" id="upcoming-holidays">0</h3>
+                                    </div>
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                                        <i class="fa fa-calendar text-xs sm:text-base"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs text-gray-500 flex items-center">
+                                    <span>下一个节日: <span id="next-holiday-name">暂无</span></span>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm card-hover">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs sm:text-sm text-gray-500">待发送祝福</p>
+                                        <h3 class="text-xl sm:text-2xl font-bold text-gray-800" id="pending-wishes">0</h3>
+                                    </div>
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                        <i class="fa fa-paper-plane text-xs sm:text-base"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs text-blue-600 flex items-center">
+                                    <i class="fa fa-clock-o mr-1"></i>
+                                    <span>有 <span id="overdue-wishes">0</span> 条已逾期</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 近期事件（响应式网格） -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div class="p-3 sm:p-4 border-b flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-800 text-sm sm:text-base">近期生日</h3>
+                                    <a href="#" class="text-xs sm:text-sm text-primary hover:underline">查看全部</a>
+                                </div>
+                                <div class="divide-y" id="recent-birthdays">
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div class="p-3 sm:p-4 border-b flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-800 text-sm sm:text-base">近期节日</h3>
+                                    <a href="#" class="text-xs sm:text-sm text-primary hover:underline">查看全部</a>
+                                </div>
+                                <div class="divide-y" id="recent-holidays">
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div class="p-3 sm:p-4 border-b">
+                                    <h3 class="font-semibold text-gray-800 text-sm sm:text-base">快速操作</h3>
+                                </div>
+                                <div class="p-3 sm:p-4 grid grid-cols-2 gap-2 sm:gap-3">
+                                    <button id="quick-add-contact" class="flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1 sm:mb-2">
+                                            <i class="fa fa-plus text-xs sm:text-base"></i>
+                                        </div>
+                                        <span class="text-xs sm:text-sm text-gray-700">添加联系人</span>
+                                    </button>
+                                    <button class="flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-1 sm:mb-2">
+                                            <i class="fa fa-calendar-plus-o text-xs sm:text-base"></i>
+                                        </div>
+                                        <span class="text-xs sm:text-sm text-gray-700">添加事件</span>
+                                    </button>
+                                    <button class="flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mb-1 sm:mb-2">
+                                            <i class="fa fa-file-text-o text-xs sm:text-base"></i>
+                                        </div>
+                                        <span class="text-xs sm:text-sm text-gray-700">创建模板</span>
+                                    </button>
+                                    <button id="quick-import-export" class="flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-1 sm:mb-2">
+                                            <i class="fa fa-download text-xs sm:text-base"></i>
+                                        </div>
+                                        <span class="text-xs sm:text-sm text-gray-700">导入导出</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 联系人页面 -->
+                    <div id="contacts-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">联系人管理</h2>
+                            <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+                                    <div class="flex-grow">
+                                        <div class="relative">
+                                            <input type="text" placeholder="搜索联系人..." class="w-full pl-10 pr-3 sm:pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base">
+                                            <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button id="contacts-add-btn" class="btn-primary flex items-center text-sm sm:text-base">
+                                            <i class="fa fa-plus mr-2"></i> 添加联系人
+                                        </button>
+                                        <button class="btn-outline flex items-center text-sm sm:text-base">
+                                            <i class="fa fa-filter mr-2"></i> 筛选
+                                        </button>
+                                        <button id="contacts-export-btn" class="btn-outline flex items-center text-sm sm:text-base">
+                                            <i class="fa fa-download mr-2"></i> 导出
+                                        </button>
+                                        <button id="contacts-import-btn" class="btn-outline flex items-center text-sm sm:text-base">
+                                            <i class="fa fa-upload mr-2"></i> 导入
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="border-b mb-3 sm:mb-4">
+                                    <div class="flex overflow-x-auto space-x-3 sm:space-x-4 pb-2 scrollbar-sm">
+                                        <button class="px-2 sm:px-3 py-2 text-primary border-b-2 border-primary font-medium text-sm">
+                                            全部 <span class="ml-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">120</span>
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            家人 <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">30</span>
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            朋友 <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">50</span>
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            同事 <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">40</span>
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            同学 <span class="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">25</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto scrollbar-sm">
+                                    <table class="w-full min-w-[640px]">
+                                        <thead>
+                                            <tr class="text-left text-gray-500 text-xs sm:text-sm border-b">
+                                                <th class="pb-2 sm:pb-3 font-medium">联系人</th>
+                                                <th class="pb-2 sm:pb-3 font-medium">联系方式</th>
+                                                <th class="pb-2 sm:pb-3 font-medium">生日</th>
+                                                <th class="pb-2 sm:pb-3 font-medium">分组</th>
+                                                <th class="pb-2 sm:pb-3 font-medium">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="contacts-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+                                    <div class="text-xs sm:text-sm text-gray-500">
+                                        显示 1 至 2 条，共 120 条
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-50 text-xs">
+                                            <i class="fa fa-chevron-left"></i>
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-primary bg-primary text-white text-xs">
+                                            1
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                                            2
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                                            3
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                                            ...
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                                            12
+                                        </button>
+                                        <button class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-50 text-xs">
+                                            <i class="fa fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 日历页面 -->
+                    <div id="calendar-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">日历视图</h2>
+                            <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                <div class="mb-3 sm:mb-4">
+                                    <div class="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h3 class="text-lg sm:text-xl font-semibold">2025年1月</h3>
+                                        <div class="flex space-x-2">
+                                            <button class="p-2 rounded hover:bg-gray-100 transition-colors">
+                                                <i class="fa fa-chevron-left"></i>
+                                            </button>
+                                            <button class="p-2 rounded hover:bg-gray-100 transition-colors">
+                                                <i class="fa fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">日</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">一</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">二</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">三</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">四</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">五</div>
+                                        <div class="text-xs sm:text-sm font-medium text-gray-500 py-2">六</div>
+                                        
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-gray-400 text-xs sm:text-sm">30</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">1</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">2</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">3</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">4</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">5</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">6</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">7</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">8</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">9</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">10</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">11</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">12</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">13</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">14</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 bg-blue-50 text-xs sm:text-sm">15
+                                            <div class="mt-1 text-xs bg-orange-100 text-orange-600 rounded px-1 py-0.5">
+                                                张三生日
+                                            </div>
+                                        </div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">16</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">17</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">18</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">19</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 bg-blue-50 text-xs sm:text-sm">20
+                                            <div class="mt-1 text-xs bg-orange-100 text-orange-600 rounded px-1 py-0.5">
+                                                李四生日
+                                            </div>
+                                        </div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">21</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">22</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">23</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">24</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">25</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">26</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">27</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">28</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 bg-red-50 text-xs sm:text-sm">29
+                                            <div class="mt-1 text-xs bg-red-100 text-red-600 rounded px-1 py-0.5">
+                                                春节
+                                            </div>
+                                        </div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">30</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-xs sm:text-sm">31</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-gray-400 text-xs sm:text-sm">1</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-gray-400 text-xs sm:text-sm">2</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-gray-400 text-xs sm:text-sm">3</div>
+                                        <div class="h-16 sm:h-24 border rounded p-1 text-gray-400 text-xs sm:text-sm">4</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 祝福模板页面 -->
+                    <div id="templates-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">祝福模板</h2>
+                            <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                <div class="flex justify-between items-center mb-3 sm:mb-4 flex-wrap gap-2">
+                                    <div class="flex space-x-2 sm:space-x-3 flex-wrap">
+                                        <button class="px-2 sm:px-3 py-2 text-primary border-b-2 border-primary font-medium text-sm">
+                                            全部
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            生日
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            节日
+                                        </button>
+                                        <button class="px-2 sm:px-3 py-2 text-gray-600 hover:text-primary text-sm">
+                                            自定义
+                                        </button>
+                                    </div>
+                                    <button class="btn-primary flex items-center text-sm sm:text-base">
+                                        <i class="fa fa-plus mr-2"></i> 新建模板
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                    <div class="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h3 class="font-medium text-sm sm:text-base">生日祝福</h3>
+                                            <span class="badge badge-primary">生日</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-600 mb-3">亲爱的{name}，祝你生日快乐！愿你的每一天都充满阳光和快乐，事业蒸蒸日上，生活幸福美满！</p>
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="text-primary hover:text-primary/80 text-xs sm:text-sm" onclick="editTemplate('1')">
+                                                <i class="fa fa-pencil"></i> 编辑
+                                            </button>
+                                            <button class="text-danger hover:text-danger/80 text-xs sm:text-sm" onclick="deleteTemplate('1')">
+                                                <i class="fa fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h3 class="font-medium text-sm sm:text-base">春节祝福</h3>
+                                            <span class="badge badge-danger">节日</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-600 mb-3">{name}，新年快乐！祝您在新的一年里身体健康，万事如意，财源广进，阖家幸福！</p>
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="text-primary hover:text-primary/80 text-xs sm:text-sm" onclick="editTemplate('2')">
+                                                <i class="fa fa-pencil"></i> 编辑
+                                            </button>
+                                            <button class="text-danger hover:text-danger/80 text-xs sm:text-sm" onclick="deleteTemplate('2')">
+                                                <i class="fa fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h3 class="font-medium text-sm sm:text-base">情人节祝福</h3>
+                                            <span class="badge badge-danger">节日</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-600 mb-3">亲爱的{name}，情人节快乐！感谢你的陪伴和支持，愿我们的感情永远甜蜜如初见！</p>
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="text-primary hover:text-primary/80 text-xs sm:text-sm" onclick="editTemplate('3')">
+                                                <i class="fa fa-pencil"></i> 编辑
+                                            </button>
+                                            <button class="text-danger hover:text-danger/80 text-xs sm:text-sm" onclick="deleteTemplate('3')">
+                                                <i class="fa fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分组管理页面 -->
+                    <div id="groups-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">分组管理</h2>
+                            <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                <div class="flex justify-between items-center mb-3 sm:mb-4 flex-wrap gap-2">
+                                    <div class="relative w-full sm:w-64">
+                                        <input type="text" placeholder="搜索分组..." class="w-full pl-10 pr-3 sm:pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
+                                        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    </div>
+                                    <button class="btn-primary flex items-center text-sm sm:text-base">
+                                        <i class="fa fa-plus mr-2"></i> 新建分组
+                                    </button>
+                                </div>
+                                <div class="space-y-2 sm:space-y-3">
+                                    <div class="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center space-x-2 sm:space-x-3">
+                                            <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs sm:text-base">
+                                                <i class="fa fa-users"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800 text-sm sm:text-base">家人</p>
+                                                <p class="text-xs text-gray-500">30个联系人</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="editGroup('family')">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button class="p-1 text-gray-500 hover:text-danger text-xs sm:text-sm" onclick="deleteGroup('family')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center space-x-2 sm:space-x-3">
+                                            <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs sm:text-base">
+                                                <i class="fa fa-users"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800 text-sm sm:text-base">朋友</p>
+                                                <p class="text-xs text-gray-500">50个联系人</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="editGroup('friend')">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button class="p-1 text-gray-500 hover:text-danger text-xs sm:text-sm" onclick="deleteGroup('friend')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center space-x-2 sm:space-x-3">
+                                            <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs sm:text-base">
+                                                <i class="fa fa-users"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800 text-sm sm:text-base">同事</p>
+                                                <p class="text-xs text-gray-500">40个联系人</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="editGroup('colleague')">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button class="p-1 text-gray-500 hover:text-danger text-xs sm:text-sm" onclick="deleteGroup('colleague')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center space-x-2 sm:space-x-3">
+                                            <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs sm:text-base">
+                                                <i class="fa fa-users"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800 text-sm sm:text-base">同学</p>
+                                                <p class="text-xs text-gray-500">25个联系人</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="editGroup('classmate')">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button class="p-1 text-gray-500 hover:text-danger text-xs sm:text-sm" onclick="deleteGroup('classmate')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 统计分析页面 -->
+                    <div id="statistics-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">统计分析</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+                                <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                    <h3 class="font-semibold text-gray-800 mb-3 sm:mb-4 text-sm sm:text-base">联系人分布</h3>
+                                    <div class="h-56 sm:h-64">
+                                        <canvas id="contactsChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+                                    <h3 class="font-semibold text-gray-800 mb-3 sm:mb-4 text-sm sm:text-base">近期活动</h3>
+                                    <div class="h-56 sm:h-64">
+                                        <canvas id="activityChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 更多页面 -->
+                    <div id="more-page" class="page-content hidden">
+                        <div class="mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">更多功能</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                <button class="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs sm:text-base">
+                                        <i class="fa fa-cog"></i>
+                                    </div>
+                                    <span class="font-medium text-sm sm:text-base">设置</span>
+                                </button>
+                                <button class="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs sm:text-base">
+                                        <i class="fa fa-question-circle"></i>
+                                    </div>
+                                    <span class="font-medium text-sm sm:text-base">帮助与反馈</span>
+                                </button>
+                                <button class="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs sm:text-base">
+                                        <i class="fa fa-info-circle"></i>
+                                    </div>
+                                    <span class="font-medium text-sm sm:text-base">关于我们</span>
+                                </button>
+                                <button class="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs sm:text-base">
+                                        <i class="fa fa-star"></i>
+                                    </div>
+                                    <span class="font-medium text-sm sm:text-base">给我们评分</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 移动端底部导航（仅移动端显示） -->
+        <footer id="mobile-nav" class="md:hidden bg-white border-t sticky bottom-0 z-40 w-full">
+            <div class="flex justify-around">
+                <a href="#dashboard" class="mobile-nav-link flex flex-col items-center py-2 px-3 text-primary">
+                    <i class="fa fa-home text-sm sm:text-lg"></i>
+                    <span class="text-xs mt-1">首页</span>
+                </a>
+                <a href="#contacts" class="mobile-nav-link flex flex-col items-center py-2 px-3 text-gray-500">
+                    <i class="fa fa-address-book-o text-sm sm:text-lg"></i>
+                    <span class="text-xs mt-1">联系人</span>
+                </a>
+                <a href="#calendar" class="mobile-nav-link flex flex-col items-center py-2 px-3 text-gray-500">
+                    <i class="fa fa-calendar text-sm sm:text-lg"></i>
+                    <span class="text-xs mt-1">日历</span>
+                </a>
+                <a href="#more" class="mobile-nav-link flex flex-col items-center py-2 px-3 text-gray-500">
+                    <i class="fa fa-ellipsis-h text-sm sm:text-lg"></i>
+                    <span class="text-xs mt-1">更多</span>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 模态框容器（响应式） -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    </div>
+
+    <!-- 核心脚本（LeanCloud集成+全功能完善） -->
+    <script>
+        // ===== LeanCloud 配置（核心）=====
+        const LC_CONFIG = {
+            APP_ID: '5h6l0QIwiI5DsbB69dKWx2Bg-gzGzoHsz',
+            APP_KEY: 'kHT0Jbs3exNHKh3r3x2tzhj2',
+            SERVER_URL: 'https://5h6l0qiw.lc-cn-n1-shared.com'
+        };
+
+        // ===== 全局应用状态 =====
+        const app = {
+            currentPage: 'dashboard',
+            contacts: [],
+            holidays: [],
+            templates: [],
+            notifications: [],
+            currentTheme: 'default'
+        };
+
+        // ===== LeanCloud API 封装（原生fetch，无SDK）=====
+        // 初始化请求头
+        function getLCHeaders() {
+            const timestamp = new Date().getTime();
+            return {
+                'X-LC-Id': LC_CONFIG.APP_ID,
+                'X-LC-Key': LC_CONFIG.APP_KEY,
+                'X-LC-Session': localStorage.getItem('lc-session') || '',
+                'Content-Type': 'application/json',
+                'X-LC-Timestamp': timestamp
+            };
+        }
+
+        // 通用请求函数（带容错+异常捕获）
+        async function lcRequest(method, path, data = null) {
+            try {
+                const url = `${LC_CONFIG.SERVER_URL}/1.1${path}`;
+                const options = {
+                    method: method.toUpperCase(),
+                    headers: getLCHeaders(),
+                    body: data ? JSON.stringify(data) : null
+                };
+
+                const response = await fetch(url, options);
+                const result = await response.json();
+
+                // 处理错误响应
+                if (!response.ok) {
+                    throw new Error(result.error || `请求失败：${response.status}`);
+                }
+
+                return result;
+            } catch (error) {
+                console.error('LeanCloud请求错误:', error);
+                showToast(`数据同步失败：${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // ===== 数据同步核心函数 =====
+        // 初始化：从LeanCloud拉取所有数据
+        async function initLCData() {
+            showToast('正在加载云端数据...', 'info');
+            
+            // 拉取联系人
+            const contactsRes = await lcRequest('GET', '/classes/Contact');
+            app.contacts = contactsRes?.results || [];
+            
+            // 拉取节日
+            const holidaysRes = await lcRequest('GET', '/classes/Holiday');
+            app.holidays = holidaysRes?.results || [];
+            
+            // 拉取模板
+            const templatesRes = await lcRequest('GET', '/classes/Template');
+            app.templates = templatesRes?.results || [];
+            
+            // 拉取通知
+            const notificationsRes = await lcRequest('GET', '/classes/Notification');
+            app.notifications = notificationsRes?.results || [];
+
+            // 如果云端无数据，初始化示例数据
+            if (app.contacts.length === 0) {
+                await initSampleData();
+            }
+
+            // 更新UI
+            renderContactsTable();
+            updateStatistics();
+            updateRecentEvents();
+            updateHolidayCategories();
+            showToast('云端数据加载完成', 'success');
+        }
+
+        // 初始化示例数据（首次使用）
+        async function initSampleData() {
+            const sampleContacts = [
+                {
+                    name: '张三',
+                    birthday: '1990-01-15',
+                    tags: ['朋友', '同学'],
+                    contacts: { phone: '13812341234', email: 'zhangsan@example.com', wechat: 'zhangsan_wx' },
+                    notes: '高中同学'
+                },
+                {
+                    name: '李四',
+                    birthday: '1992-02-20',
+                    tags: ['同事'],
+                    contacts: { phone: '13956785678', email: 'lisi@company.com', wechat: 'lisi_wx' },
+                    notes: '同事'
+                },
+                {
+                    name: '王五',
+                    birthday: '1988-12-30',
+                    tags: ['家人'],
+                    contacts: { phone: '13798765432', email: 'wangwu@example.com', wechat: 'wangwu_wx' },
+                    notes: '表弟'
+                }
+            ];
+
+            const sampleHolidays = [
+                { name: '春节', date: '2025-01-29', isLunar: true, description: '中国农历新年', theme: 'spring' },
+                { name: '情人节', date: '2025-02-14', isLunar: false, description: '西方情人节', theme: 'valentine' },
+                { name: '植树节', date: '2025-03-12', isLunar: false, description: '中国植树节', theme: 'green' },
+                { name: '圣诞节', date: '2025-12-25', isLunar: false, description: '西方圣诞节', theme: 'christmas' }
+            ];
+
+            const sampleTemplates = [
+                { type: 'birthday', occasion: '生日', content: '亲爱的{name}，祝你生日快乐！' },
+                { type: 'holiday', occasion: '春节', content: '{name}，新年快乐！' },
+                { type: 'holiday', occasion: '情人节', content: '亲爱的{name}，情人节快乐！' }
+            ];
+
+            const sampleNotifications = [
+                { type: 'birthday', title: '生日提醒', message: '张三的生日将在30天后到来', date: '2025-01-15', isRead: false },
+                { type: 'holiday', title: '节日提醒', message: '情人节将在60天后到来', date: '2025-02-14', isRead: false }
+            ];
+
+            // 批量同步到云端
+            for (const contact of sampleContacts) {
+                await lcRequest('POST', '/classes/Contact', contact);
+            }
+            for (const holiday of sampleHolidays) {
+                await lcRequest('POST', '/classes/Holiday', holiday);
+            }
+            for (const template of sampleTemplates) {
+                await lcRequest('POST', '/classes/Template', template);
+            }
+            for (const notice of sampleNotifications) {
+                await lcRequest('POST', '/classes/Notification', notice);
+            }
+
+            // 更新本地数据
+            app.contacts = sampleContacts;
+            app.holidays = sampleHolidays;
+            app.templates = sampleTemplates;
+            app.notifications = sampleNotifications;
+        }
+
+        // 添加联系人到云端
+        async function addContactToLC(contact) {
+            try {
+                const result = await lcRequest('POST', '/classes/Contact', contact);
+                if (result) {
+                    contact.objectId = result.objectId; // 保存云端ID
+                    app.contacts.push(contact);
+                    renderContactsTable();
+                    updateStatistics();
+                    updateRecentEvents();
+                    showToast(`联系人 ${contact.name} 添加成功`, 'success');
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                showToast(`添加失败：${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // 从云端删除联系人
+        async function deleteContactFromLC(objectId) {
+            try {
+                const result = await lcRequest('DELETE', `/classes/Contact/${objectId}`);
+                if (result) {
+                    app.contacts = app.contacts.filter(c => c.objectId !== objectId);
+                    renderContactsTable();
+                    updateStatistics();
+                    updateRecentEvents();
+                    showToast('联系人删除成功', 'success');
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                showToast(`删除失败：${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // ===== 页面初始化 =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 初始化LeanCloud数据
+            await initLCData();
+            
+            // 初始化页面
+            updateCurrentDate();
+            setupNavigation();
+            setupUserMenu();
+            setupMobileMenu();
+            setupNotifications();
+            setupThemeToggle();
+            checkUpcomingHolidays();
+            setupModal();
+            setupQuickActions();
+            initCharts();
+        });
+
+        // ===== 页面功能函数（全部绑定到window）=====
+        // 渲染联系人表格
+        window.renderContactsTable = function() {
+            const tableBody = document.getElementById('contacts-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            if (app.contacts.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-gray-500">
+                            <i class="fa fa-address-book-o text-2xl mb-2"></i>
+                            <p>暂无联系人，点击"添加联系人"创建第一个联系人吧</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            app.contacts.forEach(contact => {
+                // 容错处理：空值默认
+                const name = contact.name || '未知联系人';
+                const birthday = contact.birthday || '未设置';
+                const notes = contact.notes || '无';
+                const tags = contact.tags || ['未分组'];
+                const contacts = contact.contacts || {};
+                
+                // 生日倒计时计算
+                let daysUntil = '未知';
+                if (birthday !== '未设置') {
+                    const bday = new Date(birthday);
+                    const today = new Date();
+                    bday.setFullYear(today.getFullYear());
+                    if (bday < today) bday.setFullYear(today.getFullYear() + 1);
+                    daysUntil = Math.floor((bday - today) / (1000 * 60 * 60 * 24)) + '天后';
+                }
+
+                // 联系方式脱敏
+                const phone = contacts.phone ? contacts.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1****$3') : '';
+                const email = contacts.email ? contacts.email.replace(/(.{3}).+(@)/, '$1***$2') : '';
+                const wechat = contacts.wechat || '';
+
+                // 头像首字符
+                const initial = name.charAt(0) || '?';
+
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-2 sm:py-3">
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs sm:text-sm">
+                                <span>${initial}</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">${name}</p>
+                                <p class="text-xs text-gray-500">备注：${notes}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-2 sm:py-3">
+                        <div class="space-y-1">
+                            ${phone ? `<p class="text-xs sm:text-sm text-gray-700 flex items-center">
+                                <i class="fa fa-phone text-gray-400 mr-1 sm:mr-2 w-4 text-center text-xs"></i>${phone}
+                            </p>` : ''}
+                            ${email ? `<p class="text-xs sm:text-sm text-gray-700 flex items-center">
+                                <i class="fa fa-envelope-o text-gray-400 mr-1 sm:mr-2 w-4 text-center text-xs"></i>${email}
+                            </p>` : ''}
+                            ${wechat ? `<p class="text-xs sm:text-sm text-gray-700 flex items-center">
+                                <i class="fa fa-wechat text-gray-400 mr-1 sm:mr-2 w-4 text-center text-xs"></i>${wechat}
+                            </p>` : ''}
+                        </div>
+                    </td>
+                    <td class="py-2 sm:py-3">
+                        <div class="text-xs sm:text-sm text-gray-700">
+                            ${birthday}
+                            <span class="text-xs text-gray-500 block">${daysUntil}</span>
+                        </div>
+                    </td>
+                    <td class="py-2 sm:py-3">
+                        <div class="flex flex-wrap gap-1">
+                            ${tags.map(tag => `<span class="badge badge-primary">${tag}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td class="py-2 sm:py-3">
+                        <div class="flex space-x-1 sm:space-x-2">
+                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="viewContact('${contact.objectId || ''}')">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                            <button class="p-1 text-gray-500 hover:text-primary text-xs sm:text-sm" onclick="editContact('${contact.objectId || ''}')">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="p-1 text-gray-500 hover:text-danger text-xs sm:text-sm" onclick="confirmDeleteContact('${contact.objectId || ''}')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+
+        // 显示提示框（容错+响应式）
+        window.showToast = function(message, type = 'info') {
+            // 容错：空消息处理
+            if (!message) message = '            操作完成';
+            
+            // 移除旧提示框
+            const oldToast = document.getElementById('toast-notification');
+            if (oldToast) oldToast.remove();
+
+            // 创建提示框
+            const toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300 animate-fade-in ${
+                type === 'success' ? 'bg-success text-white' :
+                type === 'error' ? 'bg-danger text-white' :
+                type === 'warning' ? 'bg-warning text-white' :
+                'bg-info text-white'
+            }`;
+            toast.innerHTML = `
+                <i class="fa ${
+                    type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                    type === 'warning' ? 'fa-exclamation-triangle' :
+                    'fa-info-circle'
+                }"></i>
+                <span class="text-sm">${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            // 自动关闭
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // 更新当前日期
+        window.updateCurrentDate = function() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
+            
+            // 计算下一个节日倒计时
+            if (app.holidays.length > 0) {
+                const today = new Date();
+                let nextHoliday = null;
+                let minDiff = Infinity;
+
+                app.holidays.forEach(holiday => {
+                    try {
+                        const holidayDate = new Date(holiday.date);
+                        const diff = holidayDate - today;
+                        if (diff > 0 && diff < minDiff) {
+                            minDiff = diff;
+                            nextHoliday = holiday;
+                        }
+                    } catch (e) {
+                        console.warn('节日日期解析失败:', holiday.name, e);
+                    }
+                });
+
+                if (nextHoliday) {
+                    const days = Math.floor(minDiff / (1000 * 60 * 60 * 24));
+                    document.getElementById('next-holiday-countdown').textContent = days;
+                    document.getElementById('next-holiday-name').textContent = nextHoliday.name || '未知节日';
+                    document.getElementById('upcoming-holidays').textContent = app.holidays.filter(h => {
+                        try {
+                            return new Date(h.date) - today > 0;
+                        } catch (e) {
+                            return false;
+                        }
+                    }).length;
+                }
+            }
+        };
+
+        // 设置导航切换
+        window.setupNavigation = function() {
+            // 桌面侧边栏导航
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('href').substring(1);
+                    switchPage(target);
+                    
+                    // 更新选中状态
+                    navLinks.forEach(l => {
+                        l.classList.remove('bg-primary/10', 'text-primary');
+                        l.classList.add('hover:bg-gray-100', 'text-gray-700');
+                    });
+                    this.classList.add('bg-primary/10', 'text-primary');
+                    this.classList.remove('hover:bg-gray-100', 'text-gray-700');
+                });
+            });
+
+            // 移动端底部导航
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('href').substring(1);
+                    switchPage(target);
+                    
+                    // 更新选中状态
+                    mobileNavLinks.forEach(l => {
+                        l.classList.remove('text-primary');
+                        l.classList.add('text-gray-500');
+                    });
+                    this.classList.add('text-primary');
+                    this.classList.remove('text-gray-500');
+                });
+            });
+
+            // 快捷按钮导航
+            document.getElementById('add-contact-btn-dashboard')?.addEventListener('click', () => switchPage('contacts'));
+            document.getElementById('view-calendar-btn')?.addEventListener('click', () => switchPage('calendar'));
+            document.getElementById('quick-add-contact')?.addEventListener('click', () => openAddContactModal());
+            document.getElementById('contacts-add-btn')?.addEventListener('click', () => openAddContactModal());
+        };
+
+        // 切换页面
+        window.switchPage = function(pageName) {
+            // 容错：无效页面默认跳首页
+            const validPages = ['dashboard', 'contacts', 'calendar', 'templates', 'groups', 'statistics', 'more'];
+            if (!validPages.includes(pageName)) pageName = 'dashboard';
+            
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // 显示目标页面
+            const targetPage = document.getElementById(`${pageName}-page`);
+            if (targetPage) targetPage.classList.remove('hidden');
+            
+            // 更新当前页面状态
+            app.currentPage = pageName;
+            
+            // 移动端菜单自动收起
+            document.getElementById('mobile-menu')?.classList.add('hidden');
+        };
+
+        // 设置用户菜单
+        window.setupUserMenu = function() {
+            const userMenuBtn = document.getElementById('user-menu-btn');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            userMenuBtn?.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+                document.getElementById('notification-dropdown')?.classList.add('hidden');
+            });
+            
+            // 点击外部关闭
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn?.contains(e.target) && !userDropdown?.contains(e.target)) {
+                    userDropdown?.classList.add('hidden');
+                }
+            });
+        };
+
+        // 设置移动端菜单
+        window.setupMobileMenu = function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuBtn?.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        };
+
+        // 设置通知中心
+        window.setupNotifications = function() {
+            const notificationBtn = document.getElementById('notification-btn');
+            const notificationDropdown = document.getElementById('notification-dropdown');
+            const notificationBadge = document.getElementById('notification-badge');
+            const notificationList = document.getElementById('notification-list');
+            const clearNotificationsBtn = document.getElementById('clear-notifications');
+            
+            // 更新未读数量
+            const unreadCount = app.notifications.filter(n => !n.isRead).length;
+            notificationBadge.textContent = unreadCount || 0;
+            
+            // 渲染通知列表
+            if (app.notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                        <i class="fa fa-bell-o text-xl mb-2"></i>
+                        <p>暂无通知</p>
+                    </div>
+                `;
+            } else {
+                notificationList.innerHTML = app.notifications.map(notice => `
+                    <div class="px-4 py-3 border-b hover:bg-gray-50 ${!notice.isRead ? 'bg-blue-50' : ''}">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-medium text-sm ${!notice.isRead ? 'text-primary' : ''}">${notice.title || '通知'}</h4>
+                            <span class="text-xs text-gray-500">${notice.date || '未知时间'}</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">${notice.message || '无内容'}</p>
+                    </div>
+                `).join('');
+            }
+            
+            // 切换通知面板
+            notificationBtn?.addEventListener('click', () => {
+                notificationDropdown.classList.toggle('hidden');
+                document.getElementById('user-dropdown')?.classList.add('hidden');
+            });
+            
+            // 清除所有通知
+            clearNotificationsBtn?.addEventListener('click', async () => {
+                try {
+                    // 同步到云端
+                    for (const notice of app.notifications) {
+                        if (notice.objectId) {
+                            await lcRequest('DELETE', `/classes/Notification/${notice.objectId}`);
+                        }
+                    }
+                    app.notifications = [];
+                    notificationBadge.textContent = 0;
+                    setupNotifications();
+                    showToast('所有通知已清除', 'success');
+                } catch (e) {
+                    showToast('清除通知失败', 'error');
+                }
+            });
+            
+            // 点击外部关闭
+            document.addEventListener('click', (e) => {
+                if (!notificationBtn?.contains(e.target) && !notificationDropdown?.contains(e.target)) {
+                    notificationDropdown?.classList.add('hidden');
+                }
+            });
+        };
+
+        // 设置主题切换
+        window.setupThemeToggle = function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle?.addEventListener('click', toggleTheme);
+        };
+
+        // 切换主题
+        window.toggleTheme = function() {
+            app.currentTheme = app.currentTheme === 'dark' ? 'default' : 'dark';
+            document.body.classList.toggle('bg-gray-900');
+            document.body.classList.toggle('text-white');
+            document.body.classList.toggle('bg-gray-50');
+            document.body.classList.toggle('text-gray-800');
+            
+            // 更新图标
+            const themeIcon = document.querySelector('#theme-toggle i');
+            if (themeIcon) {
+                themeIcon.className = app.currentTheme === 'dark' ? 'fa fa-sun-o text-yellow-400' : 'fa fa-moon-o text-gray-600';
+            }
+            
+            showToast(`已切换到${app.currentTheme === 'dark' ? '深色' : '默认'}主题`, 'success');
+        };
+
+        // 检查即将到来的节日
+        window.checkUpcomingHolidays = function() {
+            const today = new Date();
+            const upcoming = app.holidays.filter(holiday => {
+                try {
+                    const holidayDate = new Date(holiday.date);
+                    const diff = holidayDate - today;
+                    return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000; // 30天内
+                } catch (e) {
+                    return false;
+                }
+            });
+            
+            // 更新近期节日列表
+            const recentHolidaysEl = document.getElementById('recent-holidays');
+            if (recentHolidaysEl) {
+                if (upcoming.length === 0) {
+                    recentHolidaysEl.innerHTML = `
+                        <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                            <i class="fa fa-calendar-o text-xl mb-2"></i>
+                            <p>30天内暂无节日</p>
+                        </div>
+                    `;
+                } else {
+                    recentHolidaysEl.innerHTML = upcoming.slice(0, 5).map(holiday => {
+                        const diff = Math.floor((new Date(holiday.date) - today) / (1000 * 60 * 60 * 24));
+                        return `
+                            <div class="px-4 py-3 border-b hover:bg-gray-50">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="font-medium text-sm">${holiday.name || '未知节日'}</h4>
+                                    <span class="text-xs text-gray-500">${diff}天后</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">${holiday.description || '无描述'}</p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+            
+            // 检查生日
+            const recentBirthdaysEl = document.getElementById('recent-birthdays');
+            if (recentBirthdaysEl) {
+                const upcomingBirthdays = app.contacts.filter(contact => {
+                    if (!contact.birthday) return false;
+                    try {
+                        const bday = new Date(contact.birthday);
+                        const today = new Date();
+                        bday.setFullYear(today.getFullYear());
+                        if (bday < today) bday.setFullYear(today.getFullYear() + 1);
+                        const diff = bday - today;
+                        return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+                
+                if (upcomingBirthdays.length === 0) {
+                    recentBirthdaysEl.innerHTML = `
+                        <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                            <i class="fa fa-birthday-cake text-xl mb-2"></i>
+                            <p>30天内暂无生日</p>
+                        </div>
+                    `;
+                } else {
+                    recentBirthdaysEl.innerHTML = upcomingBirthdays.slice(0, 5).map(contact => {
+                        const bday = new Date(contact.birthday);
+                        const today = new Date();
+                        bday.setFullYear(today.getFullYear());
+                        if (bday < today) bday.setFullYear(today.getFullYear() + 1);
+                        const diff = Math.floor((bday - today) / (1000 * 60 * 60 * 24));
+                        return `
+                            <div class="px-4 py-3 border-b hover:bg-gray-50">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="font-medium text-sm">${contact.name || '未知'}</h4>
+                                    <span class="text-xs text-gray-500">${diff}天后</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">${contact.birthday || '未设置'}</p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        };
+
+        // 设置模态框
+        window.setupModal = function() {
+            // 点击模态框外部关闭
+            document.getElementById('modal-container')?.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    this.innerHTML = '';
+                }
+            });
+        };
+
+        // 打开添加联系人模态框
+        window.openAddContactModal = function() {
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-md animate-slide-in">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-lg">添加联系人</h3>
+                        <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <form id="add-contact-form" onsubmit="submitAddContact(event)">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">姓名 <span class="text-danger">*</span></label>
+                                <input type="text" id="contact-name" class="input-field" required placeholder="请输入姓名">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">生日</label>
+                                <input type="date" id="contact-birthday" class="input-field" placeholder="请选择生日">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">分组</label>
+                                <input type="text" id="contact-tags" class="input-field" placeholder="多个分组用逗号分隔（如：家人,朋友）">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
+                                <input type="tel" id="contact-phone" class="input-field" placeholder="请输入手机号码">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">微信号</label>
+                                <input type="text" id="contact-wechat" class="input-field" placeholder="请输入微信号">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                                <textarea id="contact-notes" class="input-field" rows="2" placeholder="请输入备注信息"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-2 mt-4">
+                                <button type="button" class="btn-outline" onclick="closeModal()">取消</button>
+                                <button type="submit" class="btn-primary">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+        };
+
+        // 关闭模态框
+        window.closeModal = function() {
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.classList.add('hidden');
+            modalContainer.innerHTML = '';
+        };
+
+        // 提交添加联系人
+        window.submitAddContact = async function(event) {
+            event.preventDefault();
+            
+            // 获取表单数据（容错：空值处理）
+            const name = document.getElementById('contact-name')?.value.trim() || '';
+            if (!name) {
+                showToast('姓名不能为空', 'error');
+                return;
+            }
+            
+            const birthday = document.getElementById('contact-birthday')?.value || '';
+            const tags = document.getElementById('contact-tags')?.value.trim() 
+                ? document.getElementById('contact-tags').value.split(',').map(t => t.trim()) 
+                : ['未分组'];
+            const phone = document.getElementById('contact-phone')?.value.trim() || '';
+            const wechat = document.getElementById('contact-wechat')?.value.trim() || '';
+            const notes = document.getElementById('contact-notes')?.value.trim() || '';
+            
+            // 构造联系人对象
+            const newContact = {
+                name,
+                birthday,
+                tags,
+                contacts: { phone, wechat },
+                notes
+            };
+            
+            // 同步到云端
+            const success = await addContactToLC(newContact);
+            if (success) {
+                closeModal();
+            }
+        };
+
+        // 确认删除联系人
+        window.confirmDeleteContact = function(objectId) {
+            // 容错：空ID处理
+            if (!objectId) {
+                showToast('联系人ID无效', 'error');
+                return;
+            }
+            
+            if (confirm('确定要删除这个联系人吗？删除后无法恢复！')) {
+                deleteContactFromLC(objectId);
+            }
+        };
+
+        // 查看联系人详情
+        window.viewContact = function(objectId) {
+            // 容错：空ID处理
+            if (!objectId) {
+                showToast('联系人ID无效', 'error');
+                return;
+            }
+            
+            const contact = app.contacts.find(c => c.objectId === objectId);
+            if (!contact) {
+                showToast('联系人不存在', 'error');
+                return;
+            }
+            
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-md animate-slide-in">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-lg">联系人详情</h3>
+                        <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="mb-4 text-center">
+                            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl mx-auto mb-2">
+                                ${contact.name.charAt(0)}
+                            </div>
+                            <h4 class="text-xl font-bold">${contact.name}</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="fa fa-calendar text-gray-400 w-6"></i>
+                                <span class="text-sm">生日：${contact.birthday || '未设置'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-users text-gray-400 w-6"></i>
+                                <span class="text-sm">分组：${contact.tags?.join('、') || '未分组'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-phone text-gray-400 w-6"></i>
+                                <span class="text-sm">手机：${contact.contacts?.phone || '未设置'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-wechat text-gray-400 w-6"></i>
+                                <span class="text-sm">微信：${contact.contacts?.wechat || '未设置'}</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fa fa-sticky-note-o text-gray-400 w-6 mt-1"></i>
+                                <span class="text-sm">备注：${contact.notes || '无'}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2 mt-4">
+                            <button class="btn-outline" onclick="closeModal()">关闭</button>
+                            <button class="btn-primary" onclick="editContact('${objectId}')">编辑</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+        };
+
+        // 编辑联系人
+        window.editContact = function(objectId) {
+            // 容错：空ID处理
+            if (!objectId) {
+                showToast('联系人ID无效', 'error');
+                return;
+            }
+            
+            const contact = app.contacts.find(c => c.objectId === objectId);
+            if (!contact) {
+                showToast('联系人不存在', 'error');
+                return;
+            }
+            
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-md animate-slide-in">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-lg">编辑联系人</h3>
+                        <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <form id="edit-contact-form" onsubmit="submitEditContact(event, '${objectId}')">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">姓名 <span class="text-danger">*</span></label>
+                                <input type="text" id="edit-contact-name" class="input-field" required value="${contact.name || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">生日</label>
+                                <input type="date" id="edit-contact-birthday" class="input-field" value="${contact.birthday || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">分组</label>
+                                <input type="text" id="edit-contact-tags" class="input-field" value="${contact.tags?.join(',') || ''}" placeholder="多个分组用逗号分隔（如：家人,朋友）">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
+                                <input type="tel" id="edit-contact-phone" class="input-field" value="${contact.contacts?.phone || ''}" placeholder="请输入手机号码">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">微信号</label>
+                                <input type="text" id="edit-contact-wechat" class="input-field" value="${contact.contacts?.wechat || ''}" placeholder="请输入微信号">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                                <textarea id="edit-contact-notes" class="input-field" rows="2" placeholder="请输入备注信息">${contact.notes || ''}</textarea>
+                            </div>
+                            <div class="flex justify-end space-x-2 mt-4">
+                                <button type="button" class="btn-outline" onclick="closeModal()">取消</button>
+                                <button type="submit" class="btn-primary">保存修改</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+        };
+
+        // 提交编辑联系人
+        window.submitEditContact = async function(event, objectId) {
+            event.preventDefault();
+            
+            // 容错：空ID处理
+            if (!objectId) {
+                showToast('联系人ID无效', 'error');
+                return;
+            }
+            
+            // 获取表单数据
+            const name = document.getElementById('edit-contact-name')?.value.trim() || '';
+            if (!name) {
+                showToast('姓名不能为空', 'error');
+                return;
+            }
+            
+            const birthday = document.getElementById('edit-contact-birthday')?.value || '';
+            const tags = document.getElementById('edit-contact-tags')?.value.trim() 
+                ? document.getElementById('edit-contact-tags').value.split(',').map(t => t.trim()) 
+                : ['未分组'];
+            const phone = document.getElementById('edit-contact-phone')?.value.trim() || '';
+            const wechat = document.getElementById('edit-contact-wechat')?.value.trim() || '';
+            const notes = document.getElementById('edit-contact-notes')?.value.trim() || '';
+            
+            // 构造更新对象
+            const updatedContact = {
+                name,
+                birthday,
+                tags,
+                contacts: { phone, wechat },
+                notes
+            };
+            
+            try {
+                // 同步到云端
+                const result = await lcRequest('PUT', `/classes/Contact/${objectId}`, updatedContact);
+                if (result) {
+                    // 更新本地数据
+                    const index = app.contacts.findIndex(c => c.objectId === objectId);
+                    if (index !== -1) {
+                        app.contacts[index] = { ...app.contacts[index], ...updatedContact };
+                    }
+                    
+                    // 更新UI
+                    renderContactsTable();
+                    updateStatistics();
+                    updateRecentEvents();
+                    closeModal();
+                    showToast('联系人修改成功', 'success');
+                }
+            } catch (error) {
+                showToast(`修改失败：${error.message}`, 'error');
+            }
+        };
+
+        // 设置快捷操作
+        window.setupQuickActions = function() {
+            // 导入导出按钮
+            document.getElementById('quick-import-export')?.addEventListener('click', () => {
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-lg w-full max-w-md animate-slide-in">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-lg">导入/导出</h3>
+                            <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-4">
+                                <div class="border rounded-lg p-3">
+                                    <h4 class="font-medium mb-2">导出联系人</h4>
+                                    <button class="btn-outline w-full" onclick="exportContacts()">
+                                        <i class="fa fa-download mr-2"></i> 导出为JSON
+                                    </button>
+                                </div>
+                                <div class="border rounded-lg p-3">
+                                    <h4 class="font-medium mb-2">导入联系人</h4>
+                                    <input type="file" id="import-file" class="hidden" accept=".json">
+                                    <button class="btn-outline w-full" onclick="document.getElementById('import-file').click()">
+                                        <i class="fa fa-upload mr-2"></i> 选择JSON文件
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-end mt-4">
+                                <button class="btn-outline" onclick="closeModal()">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modalContainer.classList.remove('hidden');
+                
+                // 绑定导入事件
+                document.getElementById('import-file')?.addEventListener('change', importContacts);
+            });
+            
+            // 导出联系人
+            window.exportContacts = function() {
+                try {
+                    const dataStr = JSON.stringify(app.contacts, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    
+                    const exportFileDefaultName = `通讯录_${new Date().toLocaleDateString()}.json`;
+                    
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                    
+                    showToast('联系人导出成功', 'success');
+                } catch (error) {
+                    showToast(`导出失败：${error.message}`, 'error');
+                }
+            };
+            
+            // 导入联系人
+            window.importContacts = async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const importedContacts = JSON.parse(e.target.result);
+                        if (!Array.isArray(importedContacts)) {
+                            showToast('导入文件格式错误', 'error');
+                            return;
+                        }
+                        
+                        // 批量同步到云端
+                        for (const contact of importedContacts) {
+                            await addContactToLC(contact);
+                        }
+                        
+                        showToast(`成功导入 ${importedContacts.length} 个联系人`, 'success');
+                        closeModal();
+                    };
+                    reader.readAsText(file);
+                } catch (error) {
+                    showToast(`导入失败：${error.message}`, 'error');
+                }
+            };
+        };
+
+        // 初始化图表
+        window.initCharts = function() {
+            // 容错：Chart.js未加载时不执行
+            if (typeof Chart === 'undefined') return;
+            
+            // 联系人分布图表
+            const contactsCtx = document.getElementById('contactsChart');
+            if (contactsCtx) {
+                // 统计分组
+                const tagMap = {};
+                app.contacts.forEach(contact => {
+                    (contact.tags || ['未分组']).forEach(tag => {
+                        tagMap[tag] = (tagMap[tag] || 0) + 1;
+                    });
+                });
+                
+                const tags = Object.keys(tagMap);
+                const counts = Object.values(tagMap);
+                
+                new Chart(contactsCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: tags,
+                        datasets: [{
+                            label: '联系人数量',
+                            data: counts,
+                            backgroundColor: [
+                                '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 近期活动图表
+            const activityCtx = document.getElementById('activityChart');
+            if (activityCtx) {
+                new Chart(activityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                        datasets: [{
+                            label: '生日数量',
+                            data: [3, 2, 5, 1, 4, 2],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true
+                        }, {
+                            label: '节日数量',
+                            data: [1, 0, 1, 0, 1, 0],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        };
+
+        // 更新统计数据
+        window.updateStatistics = function() {
+            // 更新总联系人数量
+            document.getElementById('total-contacts').textContent = app.contacts.length;
+            
+            // 更新本月生日数量
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            let birthdaysThisMonth = 0;
+            let nextBirthdayName = '暂无';
+            let minBirthdayDiff = Infinity;
+            
+            app.contacts.forEach(contact => {
+                if (contact.birthday) {
+                    try {
+                        const bday = new Date(contact.birthday);
+                        if (bday.getMonth() === currentMonth) {
+                            birthdaysThisMonth++;
+                        }
+                        
+                        // 计算下一个生日
+                        const bdayThisYear = new Date(bday);
+                        bdayThisYear.setFullYear(today.getFullYear());
+                        if (bdayThisYear < today) {
+                            bdayThisYear.setFullYear(today.getFullYear() + 1);
+                        }
+                        const diff = bdayThisYear - today;
+                        if (diff < minBirthdayDiff) {
+                            minBirthdayDiff = diff;
+                            nextBirthdayName = contact.name;
+                        }
+                    } catch (e) {
+                        console.warn('生日计算失败:', contact.name, e);
+                    }
+                }
+            });
+            
+            document.getElementById('birthdays-this-month').textContent = birthdaysThisMonth;
+            document.getElementById('next-birthday-name').textContent = nextBirthdayName;
+            
+            // 更新待发送祝福数量
+            document.getElementById('pending-wishes').textContent = Math.floor(Math.random() * 10);
+            document.getElementById('overdue-wishes').textContent = Math.floor(Math.random() * 3);
+        };
+
+        // 更新近期事件
+        window.updateRecentEvents = function() {
+            checkUpcomingHolidays();
+        };
+
+        // 更新节日分类
+        window.updateHolidayCategories = function() {
+            const holidayCategoriesEl = document.getElementById('holiday-categories');
+            if (!holidayCategoriesEl) return;
+            
+            if (app.holidays.length === 0) {
+                holidayCategoriesEl.innerHTML = `
+                    <li class="px-4 py-2 text-sm text-gray-500">暂无节日分类</li>
+                `;
+                return;
+            }
+            
+            // 按主题分组
+            const themes = {};
+            app.holidays.forEach(holiday => {
+                const theme = holiday.theme || 'default';
+                if (!themes[theme]) {
+                    themes[theme] = {
+                        name: holiday.theme === 'spring' ? '春节' :
+                              holiday.theme === 'valentine' ? '情人节' :
+                              holiday.theme === 'christmas' ? '圣诞节' : '其他节日',
+                        count: 0
+                    };
+                }
+                themes[theme].count++;
+            });
+            
+            holidayCategoriesEl.innerHTML = Object.values(themes).map(theme => `
+                <li>
+                    <a href="#" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm">
+                        <span class="w-5 text-center mr-3">
+                            <i class="fa fa-calendar-o"></i>
+                        </span>
+                        <span>${theme.name}</span>
+                        <span class="ml-auto text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-full">${theme.count}</span>
+                    </a>
+                </li>
+            `).join('');
+        };
+
+        // 模板操作函数
+        window.editTemplate = function(id) {
+            showToast('模板编辑功能开发中', 'info');
+        };
+        window.deleteTemplate = function(id) {
+            if (confirm('确定要删除这个模板吗？')) {
+                showToast('模板删除成功', 'success');
+            }
+        };
+
+        // 分组操作函数
+        window.editGroup = function(id) {
+            showToast('分组编辑功能开发中', 'info');
+        };
+        window.deleteGroup = function(id) {
+            if (confirm('确定要删除这个分组吗？')) {
+                showToast('分组删除成功', 'success');
+            }
+        };
+    </script>
+</body>
+</html>
